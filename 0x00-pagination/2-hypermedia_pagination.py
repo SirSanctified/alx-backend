@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Simple pagination
+Hypermedia pagination
 """
+
 
 import csv
 import math
-from typing import List
+from typing import List, Mapping
 
 
 class Server:
@@ -49,25 +50,31 @@ class Server:
             return []
         return self.dataset()[start:end]
 
+    def get_hyper(self, page: int = 1, page_size: int = 10) -> Mapping:
+        """
+        returns a dictionary containing key-value pairs
+        """
+        data = self.get_page(page, page_size)
+        total_pages = math.ceil(len(self.dataset()) / page_size)
+        next_page = page + 1 if page < total_pages else None
+        previous_page = page - 1 if page != 1 else None
+        return {
+            'page_size': page_size,
+            'page': page,
+            'data': data,
+            'next_page': next_page,
+            'prev_page': previous_page,
+            'total_pages': total_pages,
+        }
+
 
 if __name__ == '__main__':
     server = Server()
 
-    try:
-        should_err = server.get_page(-10, 2)
-    except AssertionError:
-        print("AssertionError raised with negative values")
-
-    try:
-        should_err = server.get_page(0, 0)
-    except AssertionError:
-        print("AssertionError raised with 0")
-
-    try:
-        should_err = server.get_page(2, 'Bob')
-    except AssertionError:
-        print("AssertionError raised when page and/or page_size are not ints")
-
-    print(server.get_page(1, 3))
-    print(server.get_page(3, 2))
-    print(server.get_page(3000, 100))
+    print(server.get_hyper(1, 2))
+    print("---")
+    print(server.get_hyper(2, 2))
+    print("---")
+    print(server.get_hyper(100, 3))
+    print("---")
+    print(server.get_hyper(3000, 100))
